@@ -12,7 +12,14 @@ void DUMMY_CODE(Targs &&... /* unused */) {}
 
 using namespace std;
 
-StreamReassembler::StreamReassembler(const size_t capacity) : _buf(capacity, '\0'), _bitmap(capacity, false), _start_index(0), _unassembled_bytes(0), _eof(false), _output(capacity), _capacity(capacity) {}
+StreamReassembler::StreamReassembler(const size_t capacity)
+    : _buf(capacity, '\0')
+    , _bitmap(capacity, false)
+    , _start_index(0)
+    , _unassembled_bytes(0)
+    , _eof(false)
+    , _output(capacity)
+    , _capacity(capacity) {}
 
 //! \details This function accepts a substring (aka a segment) of bytes,
 //! possibly out-of-order, from the logical stream, and assembles any newly
@@ -24,8 +31,7 @@ void StreamReassembler::push_substring(const string &data, const size_t index, c
     }
     if (index + len < _start_index && eof) {
         _eof = true;
-    }
-    else {
+    } else {
         if (eof && index + len <= _start_index + _output.remaining_capacity()) {
             _eof = true;
         }
