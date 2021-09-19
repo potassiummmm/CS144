@@ -52,15 +52,15 @@ std::string ByteStream::read(const size_t len) {
     return output;
 }
 
-void ByteStream::end_input() { _endOfInput = true; }
+void ByteStream::end_input() { _end_of_input = true; }
 
-bool ByteStream::input_ended() const { return _endOfInput; }
+bool ByteStream::input_ended() const { return _end_of_input; }
 
 size_t ByteStream::buffer_size() const { return _buf.size(); }
 
 bool ByteStream::buffer_empty() const { return _buf.empty(); }
 
-bool ByteStream::eof() const { return _endOfInput && buffer_empty(); }
+bool ByteStream::eof() const { return _end_of_input && buffer_empty(); }
 
 size_t ByteStream::bytes_written() const { return _bytes_written; }
 
