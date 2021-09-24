@@ -9,6 +9,25 @@
 #include <functional>
 #include <queue>
 
+class Timer {
+  private:
+    unsigned int _timespan;
+    unsigned int _timeout;
+    bool _running{false};
+
+  public:
+    explicit Timer(unsigned int timeout) : _timespan{0}, _timeout{timeout} {}
+    void tick(const size_t ms_since_last_tick) { _timespan += ms_since_last_tick; }
+    void start() { _running = true; }
+    void stop() { _running = false; }
+    void reset(unsigned int timeout) {
+        _timespan = 0;
+        _timeout = timeout;
+    }
+    bool running() { return _running; }
+    bool expired() { return _timespan >= _timeout; }
+};
+
 //! \brief The "sender" part of a TCP implementation.
 
 //! Accepts a ByteStream, divides it up into segments and sends the
@@ -17,6 +36,14 @@
 //! segments if the retransmission timer expires.
 class TCPSender {
   private:
+    Timer _timer;
+    std::deque<TCPSegment> _outstanding_segments{};
+    uint32_t _consecutive_retransmissions{0};
+    uint64_t _send_base{0};
+    uint64_t _window_size{1};  // not actual
+    bool _win_empty{false};
+    bool _syn_sent{false};
+    bool _fin_sent{false};
     //! our initial sequence number, the number for our SYN.
     WrappingInt32 _isn;
 
@@ -25,6 +52,7 @@ class TCPSender {
 
     //! retransmission timer for the connection
     unsigned int _initial_retransmission_timeout;
+    unsigned int _RTO;
 
     //! outgoing stream of bytes that have not yet been sent
     ByteStream _stream;
