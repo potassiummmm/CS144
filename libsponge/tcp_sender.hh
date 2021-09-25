@@ -37,7 +37,7 @@ class Timer {
 class TCPSender {
   private:
     Timer _timer;
-    std::deque<TCPSegment> _outstanding_segments{};
+    std::queue<TCPSegment> _outstanding_segments{};
     uint32_t _consecutive_retransmissions{0};
     uint64_t _send_base{0};
     uint64_t _window_size{1};  // not actual

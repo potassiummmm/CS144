@@ -37,7 +37,7 @@ void TCPSender::fill_window() {
         _next_seqno = 1;
         _window_size--;
         _segments_out.push(seg);
-        _outstanding_segments.push_back(seg);
+        _outstanding_segments.push(seg);
         _syn_sent = true;
     } else if (_stream.eof()) {  // send FIN
         TCPSegment seg;
@@ -46,7 +46,7 @@ void TCPSender::fill_window() {
         _next_seqno++;
         _window_size--;
         _segments_out.push(seg);
-        _outstanding_segments.push_back(seg);
+        _outstanding_segments.push(seg);
         _fin_sent = true;
     } else {
         while (!_stream.buffer_empty() && _window_size != 0) {
@@ -62,7 +62,7 @@ void TCPSender::fill_window() {
             }
             _next_seqno += seg.length_in_sequence_space();
             _segments_out.push(seg);
-            _outstanding_segments.push_back(seg);
+            _outstanding_segments.push(seg);
             if (_fin_sent) {
                 break;
             }
@@ -78,19 +78,22 @@ void TCPSender::fill_window() {
 //! \param window_size The remote receiver's advertised window size
 void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_size) {
     uint64_t abs_ackno = unwrap(ackno, _isn, _send_base);
+    if (abs_ackno > _next_seqno) {
+        return;
+    }
     if (_send_base == 0 && abs_ackno == 1) {  // SYN acked
         _send_base = 1;
-        _outstanding_segments.pop_front();
+        _outstanding_segments.pop();
     } else if (_fin_sent && _outstanding_segments.size() == 1 && abs_ackno == _next_seqno) {  // FIN acked
         _send_base += _outstanding_segments.front().length_in_sequence_space();
-        _outstanding_segments.pop_front();
+        _outstanding_segments.pop();
     } else if (!_outstanding_segments.empty() &&
                abs_ackno >= _send_base + _outstanding_segments.front().length_in_sequence_space()) {  // new ack
         auto seg_len = _outstanding_segments.front().length_in_sequence_space();
         auto seg_abs_seqno = unwrap(_outstanding_segments.front().header().seqno, _isn, _send_base);
         while (seg_len + seg_abs_seqno <= abs_ackno) {
             _send_base += seg_len;
-            _outstanding_segments.pop_front();
+            _outstanding_segments.pop();
             if (_outstanding_segments.empty()) {
                 break;
             }
