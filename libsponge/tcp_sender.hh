@@ -1,6 +1,7 @@
 #ifndef SPONGE_LIBSPONGE_TCP_SENDER_HH
 #define SPONGE_LIBSPONGE_TCP_SENDER_HH
 
+#include "buffer.hh"
 #include "byte_stream.hh"
 #include "tcp_config.hh"
 #include "tcp_segment.hh"
@@ -36,14 +37,6 @@ class Timer {
 //! segments if the retransmission timer expires.
 class TCPSender {
   private:
-    Timer _timer;
-    std::queue<TCPSegment> _outstanding_segments{};
-    uint32_t _consecutive_retransmissions{0};
-    uint64_t _send_base{0};
-    uint64_t _window_size{1};  // not actual
-    bool _win_empty{false};
-    bool _syn_sent{false};
-    bool _fin_sent{false};
     //! our initial sequence number, the number for our SYN.
     WrappingInt32 _isn;
 
@@ -52,13 +45,25 @@ class TCPSender {
 
     //! retransmission timer for the connection
     unsigned int _initial_retransmission_timeout;
-    unsigned int _RTO;
 
     //! outgoing stream of bytes that have not yet been sent
     ByteStream _stream;
 
     //! the (absolute) sequence number for the next byte to be sent
     uint64_t _next_seqno{0};
+
+    bool _syn_sent = false;
+    bool _fin_sent = false;
+    uint64_t _bytes_in_flight = 0;
+    uint16_t _receiver_window_size = 0;
+    uint16_t _receiver_free_space = 0;
+    uint16_t _consecutive_retransmissions = 0;
+    unsigned int _rto = 0;
+    Timer _timer;
+    std::queue<TCPSegment> _segments_outstanding{};
+
+    bool _ack_valid(uint64_t abs_ackno);
+    void _send_segment(TCPSegment &seg);
 
   public:
     //! Initialize a TCPSender
