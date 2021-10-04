@@ -21,25 +21,22 @@ size_t ByteStream::write(const string &data) {
         return 0;
     }
     size_t len = min(remaining_capacity(), data.size());
-    for (size_t i = 0; i < len; ++i) {
-        _buf.push_back(data[i]);
-    }
+    _buf.append(BufferList(move(string().assign(data.begin(), data.begin() + len))));
     _bytes_written += len;
     return len;
 }
 
 //! \param[in] len bytes will be copied from the output side of the buffer
 string ByteStream::peek_output(const size_t len) const {
-    size_t len2peek = min(buffer_size(), len);
-    return string().assign(_buf.begin(), _buf.begin() + len2peek);
+    const size_t len2peek = min(buffer_size(), len);
+    string data = _buf.concatenate();
+    return string().assign(data.begin(), data.begin() + len2peek);
 }
 
 //! \param[in] len bytes will be removed from the output side of the buffer
 void ByteStream::pop_output(const size_t len) {
     size_t len2pop = min(buffer_size(), len);
-    for (size_t i = 0; i < len2pop; i++) {
-        _buf.pop_front();
-    }
+    _buf.remove_prefix(len2pop);
     _bytes_read += len2pop;
 }
 
@@ -47,7 +44,7 @@ void ByteStream::pop_output(const size_t len) {
 //! \param[in] len bytes will be popped and returned
 //! \returns a string
 std::string ByteStream::read(const size_t len) {
-    string output = peek_output(len);
+    const string output = peek_output(len);
     pop_output(len);
     return output;
 }
@@ -58,7 +55,7 @@ bool ByteStream::input_ended() const { return _end_of_input; }
 
 size_t ByteStream::buffer_size() const { return _buf.size(); }
 
-bool ByteStream::buffer_empty() const { return _buf.empty(); }
+bool ByteStream::buffer_empty() const { return _buf.size() == 0; }
 
 bool ByteStream::eof() const { return _end_of_input && buffer_empty(); }
 
