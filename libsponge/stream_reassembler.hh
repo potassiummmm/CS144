@@ -4,6 +4,7 @@
 #include "byte_stream.hh"
 
 #include <cstdint>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -12,20 +13,26 @@
 class StreamReassembler {
   private:
     // Your code here -- add private members as necessary.
-    std::deque<char> _buf;
-    std::deque<bool> _bitmap;
-    size_t _start_index;
+    struct Block {
+        size_t _index;
+        std::string _data;
+        explicit Block(size_t index, const std::string &data) : _index(index), _data(std::move(data)) {}
+        bool operator<(const Block block) const { return this->_index < block._index; }
+    };
+    std::set<Block> _buf{};
     size_t _unassembled_bytes;
     bool _eof;
 
     ByteStream _output;  //!< The reassembled in-order byte stream
-    size_t _capacity;    //!< The maximum number of bytes
+    size_t _capacity;    //!< The maximum number of bytesS
 
   public:
     //! \brief Construct a `StreamReassembler` that will store up to `capacity` bytes.
     //! \note This capacity limits both the bytes that have been reassembled,
     //! and those that have not yet been reassembled.
     StreamReassembler(const size_t capacity);
+
+    void insert_block(Block block);
 
     //! \brief Receive a substring and write any newly contiguous bytes into the stream.
     //!
