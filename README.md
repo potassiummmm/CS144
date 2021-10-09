@@ -1,3 +1,8 @@
+# CS144 labs
+
+## Lab7
+Test fails with some magic bug, maybe caused by internal service of the server cs144.keithw.org.
+
 For build prereqs, see [the CS144 VM setup instructions](https://web.stanford.edu/class/cs144/vm_howto).
 
 ## Sponge quickstart
